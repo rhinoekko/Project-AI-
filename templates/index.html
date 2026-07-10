@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Simulasi visualisasi algoritma pathfinding A*, Dijkstra, BFS, DFS pada grid interaktif, dilengkapi mini game tactical duel berbasis kecerdasan buatan.">
+    <meta name="keywords" content="pathfinding, A-star, Dijkstra, BFS, DFS, kecerdasan buatan, AI, simulasi, grid">
+    <meta name="author" content="Proyek Kecerdasan Buatan">
+    <title>Navigasi Agen Cerdas &amp; Mini-Game Strategi - Proyek Kecerdasan Buatan</title>
+    <!-- Preconnect for faster font loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Animated Background Canvas -->
+    <div class="bg-grid-overlay" aria-hidden="true"></div>
+    <div class="bg-scanlines" aria-hidden="true"></div>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon" aria-hidden="true"></div>
+            <div>
+                <h1>Navigasi Agen Cerdas &amp; Grid Duel</h1>
+                <div class="subtitle">SISTEM KECERDASAN BUATAN - SIMULASI AGEN CERDAS</div>
+            </div>
+        </div>
+        <div class="nav-links">
+            <div class="badge-mode pulse-badge" id="system-status">
+                <span class="status-dot" aria-hidden="true"></span>STATUS: ONLINE
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- SIDEBAR PANEL (CONTROLS & STATS) -->
+        <aside class="glass-panel">
+            <div class="section-title">
+                <h2>KONFIGURASI AGEN</h2>
+                <span>CONFIG</span>
+            </div>
+
+            <!-- Algorithm Selection -->
+            <div class="control-group">
+                <label for="algorithm-select">Algoritma Navigasi</label>
+                <div class="select-wrapper">
+                    <select id="algorithm-select" title="Pilih algoritma pencarian jalur">
+                        <option value="a_star" selected>A* Search (A-Star)</option>
+                        <option value="dijkstra">Dijkstra's Algorithm</option>
+                        <option value="bfs">Breadth-First Search (BFS)</option>
+                        <option value="dfs">Depth-First Search (DFS)</option>
+                    </select>
+                </div>
+                <!-- Algorithm description tooltip -->
+                <div class="algo-desc" id="algo-desc">
+                    <span id="algo-desc-text">A* menemukan jalur terpendek secara efisien menggunakan heuristik jarak ke tujuan.</span>
+                </div>
+            </div>
+
+            <!-- Heuristic Selection for A* -->
+            <div class="control-group" id="heuristic-group">
+                <label for="heuristic-select">Tipe Heuristik (A*)</label>
+                <div class="select-wrapper">
+                    <select id="heuristic-select" title="Pilih tipe fungsi heuristik untuk A*">
+                        <option value="manhattan" selected>Manhattan Distance</option>
+                        <option value="euclidean">Euclidean Distance</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Grid Size -->
+            <div class="control-group">
+                <label for="grid-size-select">Ukuran Grid</label>
+                <div class="select-wrapper">
+                    <select id="grid-size-select" title="Pilih ukuran grid navigasi">
+                        <option value="5">5 x 5 </option>
+                        <option value="8">8 x 8</option>
+                        <option value="10" selected>10 x 10 </option>
+                        <option value="12">12 x 12</option>
+                        <option value="15">15 x 15</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Animation Speed -->
+            <div class="control-group">
+                <label for="speed-range">Kecepatan Simulasi</label>
+                <div class="range-container">
+                    <input type="range" id="speed-range" min="10" max="300" value="50" title="Atur kecepatan animasi visualisasi">
+                    <span class="range-val" id="speed-val">50ms</span>
+                </div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="btn-group">
+                <button class="btn btn-primary btn-full" id="btn-find-path" title="Jalankan algoritma dan visualisasikan jalur (F)">
+                    <span class="btn-icon">▶</span>
+                    <span class="btn-label">Temukan Jalur</span>
+                    <span class="btn-shortcut">F</span>
+                </button>
+                <button class="btn btn-secondary" id="btn-clear-path" title="Bersihkan hasil visualisasi (C)">
+                    <span class="btn-icon">⊗</span> Bersihkan
+                    <span class="btn-shortcut">C</span>
+                </button>
+                <button class="btn btn-danger" id="btn-reset-grid" title="Reset seluruh grid ke kondisi awal (R)">
+                    <span class="btn-icon">↺</span> Reset Grid
+                    <span class="btn-shortcut">R</span>
+                </button>
+                <button class="btn btn-magenta btn-full" id="btn-direct-game" style="margin-top: 0.5rem;" title="Buka mini game tactical duel">
+                    <span class="btn-icon">⚔</span> Mainkan Mini Game
+                </button>
+            </div>
+
+            <!-- Legend -->
+            <div class="control-group">
+                <label>Legenda Grid</label>
+                <div class="legend-container">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-cyan);"></div>
+                        <span>Start (Agen)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--accent-magenta);"></div>
+                        <span>Goal (Tujuan)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: var(--bg-tertiary); border-color: rgba(255,255,255,0.2);"></div>
+                        <span>Dinding (Wall)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: rgba(6, 182, 212, 0.2); border-color: var(--accent-cyan-glow);"></div>
+                        <span>Dieksplorasi</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: rgba(245, 158, 11, 0.4); border-color: var(--accent-yellow);"></div>
+                        <span>Jalur Terbaik</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="section-title">
+                <h2>STATISTIK RUTE</h2>
+                <span>STATS</span>
+            </div>
+            <div class="stats-panel">
+                <div class="stat-box">
+                    <span class="stat-label">Sel Dikunjungi</span>
+                    <span class="stat-val" id="stat-visited">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Panjang Jalur</span>
+                    <span class="stat-val" id="stat-cost">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Waktu Komputasi</span>
+                    <span class="stat-val" id="stat-time">0 ms</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Status Agen</span>
+                    <span class="stat-val" id="stat-status" style="font-size: 0.9rem;">IDLE</span>
+                </div>
+            </div>
+
+            <!-- Console Log -->
+            <div class="section-title">
+                <h2>LOG AKTIVITAS</h2>
+                <span>LOG</span>
+            </div>
+            <div class="log-box" id="activity-log" role="log" aria-live="polite">
+                <div class="log-entry info">Sistem inisialisasi berhasil. Siap menggambar dinding!</div>
+            </div>
+        </aside>
+
+        <!-- MAIN WORKSPACE GRID -->
+        <section class="workspace-wrapper" aria-label="Grid Visualisasi Pathfinding">
+            <div class="glass-panel grid-card">
+                <!-- Hint text -->
+                <div class="grid-hint" id="grid-hint">
+                    <span>Klik/drag untuk menggambar dinding &nbsp;|&nbsp; Drag ▲ Start atau ★ Goal untuk memindahkan</span>
+                </div>
+                <div class="grid-container" id="main-grid" role="grid" aria-label="Grid navigasi interaktif">
+                    <!-- Cells will be generated here by JavaScript -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MINI GAME OVERLAY MODAL -->
+    <div class="game-modal" id="game-modal" role="dialog" aria-modal="true" aria-labelledby="game-modal-title">
+        <div class="game-container">
+            <button class="close-btn" id="game-close-btn" aria-label="Tutup mini game">&times;</button>
+
+            <!-- Left Side: Battle Grid -->
+            <div class="battle-arena-wrapper">
+                <div class="battle-header">
+                    <h2 class="battle-title" id="game-modal-title">Tactical Guardian Duel</h2>
+                    <p style="font-size: 0.8rem; color: var(--color-text-muted); font-family: 'Fira Code', monospace; margin-top: 0.25rem;">
+                        Kalahkan Guardian untuk Mengamankan Tujuan!
+                    </p>
+                </div>
+
+                <div class="battle-grid" id="battle-grid" role="grid" aria-label="Arena pertempuran 5x5">
+                    <!-- 5x5 battle cells will be generated here -->
+                </div>
+
+                <!-- Keyboard hint for game -->
+                <div class="game-keyboard-hint">
+                    <span><kbd>SPACE</kbd> Akhiri Giliran</span>
+                </div>
+            </div>
+
+            <!-- Right Side: HUD Controls -->
+            <div class="game-hud">
+                <!-- Turn Indicator -->
+                <div class="hud-panel turn-status-card">
+                    <div class="turn-text player-turn" id="turn-indicator">GILIRAN ANDA</div>
+                    <div class="ap-indicator" id="ap-indicator">
+                        <div class="ap-node active"></div>
+                        <div class="ap-node active"></div>
+                        <div class="ap-node active"></div>
+                    </div>
+                </div>
+
+                <!-- Player HP -->
+                <div class="hud-panel">
+                    <div class="hud-title hud-player-title">
+                        <span>Pemain (Agen)</span>
+                        <span id="player-shield-badge" class="shield-badge" style="display: none;">🛡 SHIELD</span>
+                    </div>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar-fill player-bar" id="player-hp-bar" style="width: 100%;"></div>
+                    </div>
+                    <div class="hp-text" id="player-hp-text">100 / 100 HP</div>
+                </div>
+
+                <!-- Enemy HP -->
+                <div class="hud-panel">
+                    <div class="hud-title hud-enemy-title">
+                        <span>Guardian (AI)</span>
+                        <span id="enemy-shield-badge" class="shield-badge enemy-shield-badge" style="display: none;">🛡 SHIELD</span>
+                    </div>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar-fill enemy-bar" id="enemy-hp-bar" style="width: 100%;"></div>
+                    </div>
+                    <div class="hp-text" id="enemy-hp-text">100 / 100 HP</div>
+                </div>
+
+                <!-- Actions Panel -->
+                <div class="hud-panel">
+                    <div class="hud-title" style="color: var(--color-text-muted);">MENU STRATEGI (3 AP)</div>
+                    <div class="action-grid">
+                        <button class="btn btn-secondary skill-btn" id="skill-move" data-action="move" title="Pindah ke sel bersebelahan (1 AP per sel)">
+                            <span>🚶 MOVE</span>
+                            <span class="skill-cost">1 AP / Sel</span>
+                        </button>
+                        <button class="btn btn-primary skill-btn" id="skill-attack" data-action="attack" title="Serang musuh jika bersebelahan (2 AP)">
+                            <span>⚔ ATTACK</span>
+                            <span class="skill-cost">2 AP</span>
+                        </button>
+                        <button class="btn btn-secondary skill-btn" style="position: relative;" id="skill-shield" data-action="shield" title="Aktifkan perisai, kurangi damage 50% (1 AP)">
+                            <span>🛡 SHIELD</span>
+                            <span class="skill-cost">1 AP</span>
+                        </button>
+                        <button class="btn btn-secondary skill-btn" style="position: relative;" id="skill-heal" data-action="heal" title="Pulihkan 25 HP (2 AP, cooldown 2 giliran)">
+                            <span>💚 HEAL</span>
+                            <span class="skill-cost">2 AP</span>
+                            <div class="skill-cooldown" id="heal-cooldown-overlay" style="display: none;">CD: 2</div>
+                        </button>
+                    </div>
+                    <!-- Explicit End Turn Button -->
+                    <button class="btn btn-secondary btn-end-turn" id="btn-end-turn" title="Akhiri giliran Anda (SPACE)">
+                        ⏭ Akhiri Giliran
+                    </button>
+                </div>
+
+                <!-- Battle Logger -->
+                <div class="battle-log" id="battle-log" role="log" aria-live="polite">
+                    <div class="battle-log-entry" style="color: var(--color-text-muted);">Duel dimulai! Gunakan AP Anda dengan bijak.</div>
+                </div>
+            </div>
+
+            <!-- Game Over Screen Inside Modal -->
+            <div class="game-over-screen" id="game-over-screen">
+                <h3 class="victory-title" id="game-over-title">VICTORY</h3>
+                <p class="game-over-msg" id="game-over-msg">Anda berhasil mengalahkan Guardian Cerdas!</p>
+                <div class="btn-group" style="width: 100%; max-width: 340px;">
+                    <button class="btn btn-primary" id="game-restart-btn">Main Lagi</button>
+                    <button class="btn btn-secondary" id="game-exit-btn">Kembali ke Navigasi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
