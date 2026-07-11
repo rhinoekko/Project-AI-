@@ -213,7 +213,7 @@ def evaluate_state(ai_hp, ai_pos, ai_shield, ai_heal_cd, player_hp, player_pos, 
         elif dist > 1:
             dist_utility = -dist * 10  # Penalize being far away
     else:
-        # AI is weak: retreat!
+        # AI is weak: retreat
         dist_utility = dist * 15  # Reward being far away
 
     # Shield value
