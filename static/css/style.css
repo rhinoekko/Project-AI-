@@ -1,8 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-/* =========================================================================
-   CSS CUSTOM PROPERTIES
-   ========================================================================= */
+/*CSS CUSTOM PROPERTIES*/
 :root {
     --bg-primary: #080c14;
     --bg-secondary: #0f1626;
@@ -24,9 +22,7 @@
     --grid-cols: 10;
 }
 
-/* =========================================================================
-   RESET & BASE
-   ========================================================================= */
+/*RESET & BASE*/
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -49,9 +45,7 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* =========================================================================
-   ANIMATED BACKGROUND
-   ========================================================================= */
+/*ANIMATED BACKGROUND*/
 
 /* Static dot grid pattern overlay */
 .bg-grid-overlay {
@@ -85,9 +79,7 @@ body {
     100% { background-position: 32px 32px; }
 }
 
-/* =========================================================================
-   HEADER
-   ========================================================================= */
+/*HEADER*/
 header {
     background: linear-gradient(180deg, rgba(15, 22, 38, 0.9) 0%, rgba(8, 12, 20, 0) 100%);
     backdrop-filter: blur(8px);
@@ -160,9 +152,7 @@ h1 {
     align-items: center;
 }
 
-/* =========================================================================
-   STATUS BADGE WITH PULSE ANIMATION
-   ========================================================================= */
+/*STATUS BADGE WITH PULSE ANIMATION*/
 .badge-mode {
     font-family: 'Fira Code', monospace;
     font-size: 0.75rem;
@@ -191,9 +181,7 @@ h1 {
     50% { opacity: 0.4; transform: scale(0.7); }
 }
 
-/* =========================================================================
-   LAYOUT
-   ========================================================================= */
+/*LAYOUT*/
 main {
     flex: 1;
     padding: 2rem;
@@ -231,9 +219,7 @@ main {
     }
 }
 
-/* =========================================================================
-   GLASSMORPHISM PANEL
-   ========================================================================= */
+/*GLASSMORPHISM PANEL*/
 .glass-panel {
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
@@ -274,9 +260,7 @@ main {
     font-family: 'Fira Code', monospace;
 }
 
-/* =========================================================================
-   FORM CONTROLS
-   ========================================================================= */
+/*FORM CONTROLS*/
 .control-group {
     display: flex;
     flex-direction: column;
@@ -404,9 +388,7 @@ input[type="range"]::-moz-range-thumb {
     cursor: grab;
 }
 
-/* =========================================================================
-   BUTTONS
-   ========================================================================= */
+/*BUTTONS*/
 .btn {
     background: linear-gradient(135deg, var(--bg-tertiary), rgba(23, 34, 59, 0.4));
     border: 1px solid var(--border-color);
@@ -546,9 +528,7 @@ input[type="range"]::-moz-range-thumb {
     border-style: solid;
 }
 
-/* =========================================================================
-   LEGEND
-   ========================================================================= */
+/*LEGEND*/
 .legend-container {
     display: flex;
     flex-wrap: wrap;
@@ -572,9 +552,7 @@ input[type="range"]::-moz-range-thumb {
     flex-shrink: 0;
 }
 
-/* =========================================================================
-   STATS PANEL
-   ========================================================================= */
+/*STATS PANEL*/
 .stats-panel {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -612,9 +590,7 @@ input[type="range"]::-moz-range-thumb {
     transition: color 0.3s ease;
 }
 
-/* =========================================================================
-   LOG BOX
-   ========================================================================= */
+/*LOG BOX*/
 .log-box {
     background: rgba(8, 12, 20, 0.7);
     border: 1px solid var(--border-color);
@@ -662,9 +638,7 @@ input[type="range"]::-moz-range-thumb {
 .log-entry.warning { border-color: var(--accent-yellow); color: #fcd34d; }
 .log-entry.error   { border-color: #ef4444; color: #fca5a5; }
 
-/* =========================================================================
-   GRID WORKSPACE
-   ========================================================================= */
+/*GRID WORKSPACE*/
 .workspace-wrapper {
     display: flex;
     flex-direction: column;
@@ -713,9 +687,7 @@ input[type="range"]::-moz-range-thumb {
     box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 0 1px rgba(6, 182, 212, 0.1);
 }
 
-/* =========================================================================
-   GRID CELLS
-   ========================================================================= */
+/* GRID CELLS */
 .grid-cell {
     background: rgba(23, 34, 59, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.025);
@@ -820,9 +792,7 @@ input[type="range"]::-moz-range-thumb {
     font-size: clamp(0.6rem, 1.3vw, 1.2rem);
 }
 
-/* =========================================================================
-   MINI GAME MODAL OVERLAY
-   ========================================================================= */
+/* MINI GAME MODAL OVERLAY */
 .game-modal {
     position: fixed;
     inset: 0;
@@ -909,9 +879,7 @@ input[type="range"]::-moz-range-thumb {
     border-color: rgba(239, 68, 68, 0.5);
 }
 
-/* =========================================================================
-   BATTLE ARENA
-   ========================================================================= */
+/* BATTLE ARENA */
 .battle-arena-wrapper {
     display: flex;
     flex-direction: column;
@@ -1019,9 +987,7 @@ input[type="range"]::-moz-range-thumb {
     transform: scale(1.06);
 }
 
-/* =========================================================================
-   GAME CHARACTERS
-   ========================================================================= */
+/* GAME CHARACTERS */
 .game-char {
     width: 78%;
     height: 78%;
@@ -1067,9 +1033,7 @@ input[type="range"]::-moz-range-thumb {
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
 }
 
-/* =========================================================================
-   GAME HUD
-   ========================================================================= */
+/* GAME HUD */
 .game-hud {
     display: flex;
     flex-direction: column;
@@ -1183,9 +1147,7 @@ input[type="range"]::-moz-range-thumb {
     margin-top: 0.3rem;
 }
 
-/* =========================================================================
-   TURN INDICATOR
-   ========================================================================= */
+/* TURN INDICATOR */
 .turn-status-card {
     text-align: center;
     background: rgba(6, 182, 212, 0.05);
@@ -1237,9 +1199,7 @@ input[type="range"]::-moz-range-thumb {
     border-color: #f87171;
 }
 
-/* =========================================================================
-   ACTION GRID
-   ========================================================================= */
+/* ACTION GRID */
 .action-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1278,9 +1238,7 @@ input[type="range"]::-moz-range-thumb {
     font-size: 0.9rem;
 }
 
-/* =========================================================================
-   BATTLE LOG
-   ========================================================================= */
+/* BATTLE LOG */
 .battle-log {
     max-height: 110px;
     background: rgba(8, 12, 20, 0.65);
@@ -1308,9 +1266,8 @@ input[type="range"]::-moz-range-thumb {
     animation: log-appear 0.2s ease;
 }
 
-/* =========================================================================
-   FLOATING NUMBER EFFECTS
-   ========================================================================= */
+/*FLOATING NUMBER EFFECTS */
+
 .floating-number {
     position: absolute;
     font-family: 'Space Grotesk', sans-serif;
@@ -1340,9 +1297,7 @@ input[type="range"]::-moz-range-thumb {
     text-shadow: 0 0 12px rgba(6, 182, 212, 0.7), 0 2px 4px rgba(0,0,0,0.8);
 }
 
-/* =========================================================================
-   GAME OVER OVERLAY
-   ========================================================================= */
+/* GAME OVER OVERLAY */
 .game-over-screen {
     position: absolute;
     inset: 0;
@@ -1405,9 +1360,7 @@ input[type="range"]::-moz-range-thumb {
     line-height: 1.6;
 }
 
-/* =========================================================================
-   KEYFRAME ANIMATIONS
-   ========================================================================= */
+/* KEYFRAME ANIMATIONS */
 
 @keyframes wall-bump {
     0%   { transform: scale(0.5); opacity: 0; }

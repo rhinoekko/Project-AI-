@@ -736,9 +736,9 @@ skillHeal.addEventListener('click', () => {
     checkTurnAutoEnd();
 });
 
-// =========================================================================
+
 // TARGET HIGHLIGHTING
-// =========================================================================
+
 function highlightTargets() {
     // Clear all highlights efficiently using cache
     for (const cell of battleCellCache.values()) {
@@ -772,9 +772,9 @@ function getAdjacentGameCells(pos) {
     );
 }
 
-// =========================================================================
+
 // BATTLE CELL CLICK
-// =========================================================================
+
 function handleBattleCellClick(x, y) {
     if (currentTurn !== 'player') return;
 
@@ -836,9 +836,9 @@ function endPlayerTurn() {
     setTimeout(runEnemyAI, 900);
 }
 
-// =========================================================================
+
 // ENEMY AI SIMULATION & EXECUTION
-// =========================================================================
+
 function runEnemyAI() {
     fetch('/api/game/ai-move', {
         method: 'POST',
@@ -926,9 +926,9 @@ function replenishPlayerAP() {
     if (playerHealCooldown > 0) playerHealCooldown--;
 }
 
-// =========================================================================
+
 // GAME MECHANICS HELPERS
-// =========================================================================
+
 function logBattleEvent(msg, sender) {
     const entry = document.createElement('div');
     entry.className = 'battle-log-entry';
@@ -993,9 +993,9 @@ function showGameOver(isVictory) {
 gameRestartBtn.addEventListener('click', initMiniGame);
 gameExitBtn.addEventListener('click', closeMiniGame);
 
-// =========================================================================
+
 // INITIALIZE APPLICATION
-// =========================================================================
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize grid
     initPathfinderGrid();
