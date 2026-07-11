@@ -26,7 +26,7 @@ Aplikasi web interaktif untuk memvisualisasikan algoritma navigasi agen cerdas (
 ```text
 Project/
 │
-├── app.py                 # Backend Flask & Algoritma AI (Pathfinding & Game Decision AI)
+├── app.py                 # Backend Flask & Algoritma AI
 ├── README.md              # Panduan Penggunaan Aplikasi
 │
 ├── templates/
@@ -34,7 +34,7 @@ Project/
 │
 └── static/
     ├── css/
-    │   └── style.css      # Desain Visual Premium Cyber-Grid & Animasi
+    │   └── style.css      # Desain Visual & Animasi
     └── js/
         └── main.js        # Logika Klien & Kontrol Interaksi UI
 ```
