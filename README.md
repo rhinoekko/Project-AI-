@@ -26,6 +26,7 @@ Aplikasi web interaktif untuk memvisualisasikan algoritma navigasi agen cerdas (
 ```text
 Project/
 │
+├── app_streamlit.py       # Integrasi Streamlit
 ├── app.py                 # Backend Flask & Algoritma AI
 ├── README.md              # Panduan Penggunaan Aplikasi
 │
@@ -43,12 +44,23 @@ Project/
 
 ## Cara Menjalankan Aplikasi
 
-Aplikasi server Flask Anda saat ini **sedang berjalan di latar belakang**. Anda dapat langsung membukanya di browser:
-👉 [http://127.0.0.1:5000](http://127.0.0.1:5000)
+### Metode 1: Menggunakan Streamlit (Direkomendasikan)
+Aplikasi ini sekarang mendukung integrasi dengan Streamlit yang membungkus server Flask secara otomatis.
 
-Jika ingin menjalankannya secara manual di kemudian hari:
+1. Install Streamlit jika belum terinstall:
+   ```bash
+   pip install streamlit
+   ```
+2. Jalankan aplikasi menggunakan Streamlit:
+   ```bash
+   streamlit run app_streamlit.py
+   ```
+3. Browser akan terbuka secara otomatis mengarah ke dashboard Streamlit (biasanya `http://localhost:8501`).
 
-1. Buka terminal/PowerShell di direktori proyek ini:
+### Metode 2: Menggunakan Flask Klasik
+Jika Anda ingin menjalankan Flask server secara mandiri tanpa interface Streamlit:
+
+1. Jalankan aplikasi Flask:
    ```bash
    python app.py
    ```
