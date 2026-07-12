@@ -1,25 +1,6 @@
 import streamlit as st
-import threading
-import time
-import socket
-from app import app  # Import Flask app from app.py
-
-def is_port_in_use(port):
-    """Check if a local port is already in use."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(('127.0.0.1', port)) == 0
-
-def run_flask():
-    """Run the Flask server on port 5000."""
-    # Run with debug=False and use_reloader=False to prevent issues in background thread
-    app.run(host='127.0.0.1', port=5000, debug=False, use_reloader=False)
-
-# Start Flask in a background thread if it is not already running on port 5000
-if not is_port_in_use(5000):
-    flask_thread = threading.Thread(target=run_flask, daemon=True)
-    flask_thread.start()
-    # Give the server a moment to start
-    time.sleep(1.5)
+import streamlit.components.v1 as components
+import os
 
 # Streamlit Page Configuration
 st.set_page_config(
@@ -39,10 +20,10 @@ st.markdown("""
         
         /* Reduce padding around main container */
         .block-container {
-            padding-top: 1rem !important;
+            padding-top: 0.5rem !important;
             padding-bottom: 0rem !important;
-            padding-left: 1.5rem !important;
-            padding-right: 1.5rem !important;
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
             max-width: 100% !important;
         }
         
@@ -51,7 +32,7 @@ st.markdown("""
             font-family: 'Space Grotesk', sans-serif;
             color: #9ca3af;
             font-size: 0.9rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -68,10 +49,48 @@ st.markdown("""
 # Small native header inside Streamlit
 st.markdown("""
     <div class="streamlit-info-text">
-        <span>🤖 <strong>Cyber Pathfinder & Grid Duel</strong> &mdash; Streamlit Mode</span>
-        <span>Running on <a href="http://127.0.0.1:8501" target="_blank">http://127.0.0.1:8501</a></span>
+        <span>🤖 <strong>Cyber Pathfinder & Grid Duel</strong> &mdash; Streamlit Cloud Mode</span>
+        <span>Runs 100% serverless on client side</span>
     </div>
 """, unsafe_allow_html=True)
 
-# Embed the Flask application in an iframe
-st.iframe("http://127.0.0.1:8501", height=920)
+# Load and inline CSS & JS to create a self-contained HTML page
+# This eliminates the need for an external Flask server, making it fully compatible with Streamlit Community Cloud.
+@st.cache_data
+def get_self_contained_html():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Path settings
+    html_path = os.path.join(base_dir, "templates", "index.html")
+    css_path = os.path.join(base_dir, "static", "css", "style.css")
+    js_path = os.path.join(base_dir, "static", "js", "main.js")
+    
+    try:
+        with open(html_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        with open(css_path, "r", encoding="utf-8") as f:
+            css_content = f.read()
+        with open(js_path, "r", encoding="utf-8") as f:
+            js_content = f.read()
+            
+        # Inline stylesheet replacement
+        css_tag = f"<style>\n{css_content}\n</style>"
+        html_content = html_content.replace(
+            '<link rel="stylesheet" href="{{ url_for(\'static\', filename=\'css/style.css\') }}">',
+            css_tag
+        )
+        
+        # Inline script replacement
+        js_tag = f"<script>\n{js_content}\n</script>"
+        html_content = html_content.replace(
+            '<script src="{{ url_for(\'static\', filename=\'js/main.js\') }}"></script>',
+            js_tag
+        )
+        
+        return html_content
+    except Exception as e:
+        return f"<h3>Error loading application files: {e}</h3>"
+
+# Render the self-contained app inside Streamlit components.html
+html_markup = get_self_contained_html()
+components.html(html_markup, height=920, scrolling=True)

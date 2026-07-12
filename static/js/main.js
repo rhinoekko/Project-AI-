@@ -320,34 +320,44 @@ btnFindPath.addEventListener('click', () => {
     isSimulating = true;
     writeLog(`Menjalankan algoritma ${algorithm.replace('_', ' ').toUpperCase()}...`, 'info');
 
-    fetch('/api/pathfind', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            grid_size: gridSize,
-            start:     [startNode.x, startNode.y],
-            goal:      [goalNode.x,  goalNode.y],
-            walls:     wallArray,
-            algorithm: algorithm,
-            heuristic: heuristic
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        // Restore button
-        if (btnLabel) btnLabel.textContent = origText;
-        btnFindPath.disabled = false;
-        animatePathfinding(data.visited, data.path, data.execution_time_ms, data.cost);
-    })
-    .catch(err => {
-        console.error(err);
-        if (btnLabel) btnLabel.textContent = origText;
-        btnFindPath.disabled = false;
-        isSimulating = false;
-        statStatus.textContent = 'ERROR';
-        statStatus.style.color = '#ef4444';
-        writeLog('Gagal menghubungkan ke backend API!', 'error');
-    });
+    // Simulate API call locally
+    setTimeout(() => {
+        try {
+            const start_time = performance.now();
+            const wallsSet = new Set(walls);
+
+            let result;
+            const startArr = [startNode.x, startNode.y];
+            const goalArr = [goalNode.x, goalNode.y];
+
+            if (algorithm === 'bfs') {
+                result = bfsSearch(gridSize, startArr, goalArr, wallsSet);
+            } else if (algorithm === 'dfs') {
+                result = dfsSearch(gridSize, startArr, goalArr, wallsSet);
+            } else if (algorithm === 'dijkstra') {
+                result = dijkstraSearch(gridSize, startArr, goalArr, wallsSet);
+            } else { // a_star
+                result = aStarSearch(gridSize, startArr, goalArr, wallsSet, heuristic);
+            }
+
+            const end_time = performance.now();
+            const execution_time_ms = Number((end_time - start_time).toFixed(3));
+            const cost = result.path.length > 0 ? result.path.length - 1 : 0;
+
+            // Restore button
+            if (btnLabel) btnLabel.textContent = origText;
+            btnFindPath.disabled = false;
+            animatePathfinding(result.visited, result.path, execution_time_ms, cost);
+        } catch (err) {
+            console.error(err);
+            if (btnLabel) btnLabel.textContent = origText;
+            btnFindPath.disabled = false;
+            isSimulating = false;
+            statStatus.textContent = 'ERROR';
+            statStatus.style.color = '#ef4444';
+            writeLog('Gagal menjalankan komputasi lokal!', 'error');
+        }
+    }, 100);
 });
 
 
@@ -840,27 +850,32 @@ function endPlayerTurn() {
 // ENEMY AI SIMULATION & EXECUTION
 
 function runEnemyAI() {
-    fetch('/api/game/ai-move', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            game_state: gameState,
-            walls: gameWalls
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        executeEnemyActions(data.actions, data.game_state);
-    })
-    .catch(err => {
-        console.error(err);
-        logBattleEvent('Koneksi AI gagal, Guardian bertahan.', 'enemy');
-        gameState.ai_shield = true;
-        currentTurn = 'player';
-        replenishPlayerAP();
-        renderBattleGrid();
-        updateGameHUD();
-    });
+    // Run AI decision engine locally with a small thinking delay (400ms)
+    setTimeout(() => {
+        try {
+            const [actions, finalState] = computeBestAiTurn(gameState, gameWalls);
+
+            const responseState = {
+                ai_hp: finalState.ai_hp,
+                ai_pos: [finalState.ai_pos[0], finalState.ai_pos[1]],
+                ai_shield: finalState.ai_shield,
+                ai_heal_cd: Math.max(0, finalState.ai_heal_cd - 1),
+                player_hp: finalState.player_hp,
+                player_pos: [finalState.player_pos[0], finalState.player_pos[1]],
+                player_shield: finalState.player_shield
+            };
+
+            executeEnemyActions(actions, responseState);
+        } catch (err) {
+            console.error(err);
+            logBattleEvent('Koneksi AI gagal, Guardian bertahan.', 'enemy');
+            gameState.ai_shield = true;
+            currentTurn = 'player';
+            replenishPlayerAP();
+            renderBattleGrid();
+            updateGameHUD();
+        }
+    }, 400);
 }
 
 function executeEnemyActions(actions, nextState) {
@@ -1010,3 +1025,436 @@ document.addEventListener('DOMContentLoaded', () => {
 
     writeLog('Selamat datang! Mulai dengan menggambar dinding, lalu tekan "Temukan Jalur" atau tekan [F].', 'info');
 });
+
+// ==========================================
+// CLIENT-SIDE PATHFINDING & AI LOGIC (FOR STREAMLIT CLOUD DEPLOYMENT)
+// ==========================================
+
+class MinHeap {
+    constructor() {
+        this.data = [];
+    }
+    push(item) {
+        this.data.push(item);
+        this.up(this.data.length - 1);
+    }
+    pop() {
+        const top = this.data[0];
+        const bottom = this.data.pop();
+        if (this.data.length > 0) {
+            this.data[0] = bottom;
+            this.down(0);
+        }
+        return top;
+    }
+    size() {
+        return this.data.length;
+    }
+    up(i) {
+        while (i > 0) {
+            const p = (i - 1) >> 1;
+            if (this.data[i][0] < this.data[p][0]) {
+                const tmp = this.data[i];
+                this.data[i] = this.data[p];
+                this.data[p] = tmp;
+                i = p;
+            } else {
+                break;
+            }
+        }
+    }
+    down(i) {
+        const len = this.data.length;
+        while ((i << 1) + 1 < len) {
+            let child = (i << 1) + 1;
+            if (child + 1 < len && this.data[child + 1][0] < this.data[child][0]) {
+                child++;
+            }
+            if (this.data[child][0] < this.data[i][0]) {
+                const tmp = this.data[i];
+                this.data[i] = this.data[child];
+                this.data[child] = tmp;
+                i = child;
+            } else {
+                break;
+            }
+        }
+    }
+}
+
+function getNeighbors(node, gridSize, wallsSet) {
+    const [x, y] = node;
+    const neighbors = [];
+    const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+    for (const [dx, dy] of dirs) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize) {
+            if (!wallsSet.has(`${nx},${ny}`)) {
+                neighbors.push([nx, ny]);
+            }
+        }
+    }
+    return neighbors;
+}
+
+function reconstructPath(cameFrom, current) {
+    const path = [current];
+    let key = `${current[0]},${current[1]}`;
+    while (cameFrom.hasOwnProperty(key)) {
+        current = cameFrom[key];
+        path.push(current);
+        key = `${current[0]},${current[1]}`;
+    }
+    path.reverse();
+    return path;
+}
+
+function bfsSearch(gridSize, start, goal, wallsSet) {
+    const visitedOrder = [];
+    const cameFrom = {};
+    const queue = [start];
+    const visitedSet = new Set([`${start[0]},${start[1]}`]);
+
+    let found = false;
+    while (queue.length > 0) {
+        const current = queue.shift();
+        visitedOrder.push(current);
+
+        if (current[0] === goal[0] && current[1] === goal[1]) {
+            found = true;
+            break;
+        }
+
+        const neighbors = getNeighbors(current, gridSize, wallsSet);
+        for (const neighbor of neighbors) {
+            const nKey = `${neighbor[0]},${neighbor[1]}`;
+            if (!visitedSet.has(nKey)) {
+                visitedSet.add(nKey);
+                cameFrom[nKey] = current;
+                queue.push(neighbor);
+            }
+        }
+    }
+
+    const path = found ? reconstructPath(cameFrom, goal) : [];
+    return { visited: visitedOrder, path: path };
+}
+
+function dfsSearch(gridSize, start, goal, wallsSet) {
+    const visitedOrder = [];
+    const cameFrom = {};
+    const stack = [start];
+    const frontierSet = new Set([`${start[0]},${start[1]}`]);
+    const visitedSet = new Set();
+
+    let found = false;
+    while (stack.length > 0) {
+        const current = stack.pop();
+        const curKey = `${current[0]},${current[1]}`;
+        frontierSet.delete(curKey);
+
+        if (visitedSet.has(curKey)) {
+            continue;
+        }
+
+        visitedSet.add(curKey);
+        visitedOrder.push(current);
+
+        if (current[0] === goal[0] && current[1] === goal[1]) {
+            found = true;
+            break;
+        }
+
+        const neighbors = getNeighbors(current, gridSize, wallsSet);
+        const revNeighbors = [...neighbors].reverse();
+        for (const neighbor of revNeighbors) {
+            const nKey = `${neighbor[0]},${neighbor[1]}`;
+            if (!visitedSet.has(nKey) && !frontierSet.has(nKey)) {
+                cameFrom[nKey] = current;
+                stack.push(neighbor);
+                frontierSet.add(nKey);
+            }
+        }
+    }
+
+    const path = found ? reconstructPath(cameFrom, goal) : [];
+    return { visited: visitedOrder, path: path };
+}
+
+function dijkstraSearch(gridSize, start, goal, wallsSet) {
+    const visitedOrder = [];
+    const cameFrom = {};
+    const gScore = {};
+    const startKey = `${start[0]},${start[1]}`;
+    gScore[startKey] = 0;
+
+    const heap = new MinHeap();
+    heap.push([0, start]);
+    const visitedSet = new Set();
+
+    let found = false;
+    while (heap.size() > 0) {
+        const [currentCost, current] = heap.pop();
+        const curKey = `${current[0]},${current[1]}`;
+
+        if (visitedSet.has(curKey)) {
+            continue;
+        }
+
+        visitedSet.add(curKey);
+        visitedOrder.push(current);
+
+        if (current[0] === goal[0] && current[1] === goal[1]) {
+            found = true;
+            break;
+        }
+
+        const neighbors = getNeighbors(current, gridSize, wallsSet);
+        for (const neighbor of neighbors) {
+            const nKey = `${neighbor[0]},${neighbor[1]}`;
+            const tentativeG = currentCost + 1;
+            if (tentativeG < (gScore[nKey] !== undefined ? gScore[nKey] : Infinity)) {
+                gScore[nKey] = tentativeG;
+                cameFrom[nKey] = current;
+                heap.push([tentativeG, neighbor]);
+            }
+        }
+    }
+
+    const path = found ? reconstructPath(cameFrom, goal) : [];
+    return { visited: visitedOrder, path: path };
+}
+
+function aStarSearch(gridSize, start, goal, wallsSet, heuristicType = 'manhattan') {
+    const [gx, gy] = goal;
+
+    function heuristic(node) {
+        if (heuristicType === 'euclidean') {
+            return Math.sqrt((node[0] - gx) ** 2 + (node[1] - gy) ** 2);
+        } else {
+            return Math.abs(node[0] - gx) + Math.abs(node[1] - gy);
+        }
+    }
+
+    const visitedOrder = [];
+    const cameFrom = {};
+    const startKey = `${start[0]},${start[1]}`;
+    const gScore = {};
+    gScore[startKey] = 0;
+    const fScore = {};
+    fScore[startKey] = heuristic(start);
+
+    let counter = 0;
+    const heap = new MinHeap();
+    heap.push([fScore[startKey], counter, start]);
+
+    const openSetNodes = new Set([startKey]);
+    const visitedSet = new Set();
+
+    let found = false;
+    while (heap.size() > 0) {
+        const [_, __, current] = heap.pop();
+        const curKey = `${current[0]},${current[1]}`;
+
+        if (visitedSet.has(curKey)) {
+            continue;
+        }
+
+        openSetNodes.delete(curKey);
+        visitedSet.add(curKey);
+        visitedOrder.push(current);
+
+        if (current[0] === goal[0] && current[1] === goal[1]) {
+            found = true;
+            break;
+        }
+
+        const currentG = gScore[curKey];
+        const neighbors = getNeighbors(current, gridSize, wallsSet);
+        for (const neighbor of neighbors) {
+            const nKey = `${neighbor[0]},${neighbor[1]}`;
+            if (visitedSet.has(nKey)) {
+                continue;
+            }
+
+            const tentativeG = currentG + 1;
+            if (tentativeG < (gScore[nKey] !== undefined ? gScore[nKey] : Infinity)) {
+                cameFrom[nKey] = current;
+                gScore[nKey] = tentativeG;
+                const f = tentativeG + heuristic(neighbor);
+                fScore[nKey] = f;
+
+                if (!openSetNodes.has(nKey)) {
+                    openSetNodes.add(nKey);
+                    counter++;
+                    heap.push([f, counter, neighbor]);
+                }
+            }
+        }
+    }
+
+    const path = found ? reconstructPath(cameFrom, goal) : [];
+    return { visited: visitedOrder, path: path };
+}
+
+const GAME_GRID_SIZE = 5;
+
+function gameDistance(pos1, pos2) {
+    return Math.abs(pos1[0] - pos2[0]) + Math.abs(pos1[1] - pos2[1]);
+}
+
+function evaluateState(ai_hp, ai_pos, ai_shield, ai_heal_cd, player_hp, player_pos, player_shield, walls) {
+    if (player_hp <= 0) return 5000;
+    if (ai_hp <= 0) return -5000;
+
+    const dist = gameDistance(ai_pos, player_pos);
+    const hp_diff = ai_hp * 2.0 - player_hp * 2.5;
+
+    let dist_utility = 0;
+    if (ai_hp > 35) {
+        if (dist === 1) {
+            dist_utility = 50;
+        } else if (dist > 1) {
+            dist_utility = -dist * 10;
+        }
+    } else {
+        dist_utility = dist * 15;
+    }
+
+    const shield_val = ai_shield ? 15 : 0;
+    const danger_val = (dist === 1 && !ai_shield) ? -30 : 0;
+
+    return hp_diff + dist_utility + shield_val + danger_val;
+}
+
+function generateActionCombinations(aiHealCd) {
+    const possibleCombos = [];
+    const basicActions = [
+        ['shield', 1],
+        ['attack', 2],
+        ['heal', 2],
+        ['move_up', 1],
+        ['move_down', 1],
+        ['move_left', 1],
+        ['move_right', 1]
+    ];
+
+    function buildSequences(currentSeq, currentAp) {
+        if (currentAp > 3) return;
+        if (currentSeq.length > 0) {
+            possibleCombos.push(currentSeq);
+        }
+
+        for (const [actName, cost] of basicActions) {
+            if (currentAp + cost <= 3) {
+                if (actName === 'heal' && aiHealCd > 0) continue;
+                buildSequences([...currentSeq, actName], currentAp + cost);
+            }
+        }
+    }
+
+    buildSequences([], 0);
+    return possibleCombos;
+}
+
+function simulateSequence(sequence, initialState, walls) {
+    const wallsSet = new Set(walls.map(w => `${w[0]},${w[1]}`));
+
+    const state = {
+        ai_hp: initialState.ai_hp,
+        ai_pos: [initialState.ai_pos[0], initialState.ai_pos[1]],
+        ai_shield: initialState.ai_shield,
+        ai_heal_cd: initialState.ai_heal_cd,
+        player_hp: initialState.player_hp,
+        player_pos: [initialState.player_pos[0], initialState.player_pos[1]],
+        player_shield: initialState.player_shield
+    };
+
+    const actualActions = [];
+
+    for (const action of sequence) {
+        if (action.startsWith('move_')) {
+            const direction = action.split('_')[1];
+            let dx = 0, dy = 0;
+            if (direction === 'up') dy = -1;
+            else if (direction === 'down') dy = 1;
+            else if (direction === 'left') dx = -1;
+            else if (direction === 'right') dx = 1;
+
+            const nx = state.ai_pos[0] + dx;
+            const ny = state.ai_pos[1] + dy;
+
+            if (!(nx >= 0 && nx < GAME_GRID_SIZE && ny >= 0 && ny < GAME_GRID_SIZE)) return [false, null];
+            if (wallsSet.has(`${nx},${ny}`)) return [false, null];
+            if (nx === state.player_pos[0] && ny === state.player_pos[1]) return [false, null];
+
+            state.ai_pos = [nx, ny];
+            actualActions.push({ type: 'move', target: [nx, ny] });
+
+        } else if (action === 'attack') {
+            const distX = Math.abs(state.ai_pos[0] - state.player_pos[0]);
+            const distY = Math.abs(state.ai_pos[1] - state.player_pos[1]);
+            if (Math.max(distX, distY) > 1) return [false, null];
+
+            let damage = Math.floor(Math.random() * 6) + 20;
+            if (state.player_shield) damage = Math.floor(damage / 2);
+
+            state.player_hp = Math.max(0, state.player_hp - damage);
+            actualActions.push({ type: 'attack', damage: damage });
+
+        } else if (action === 'shield') {
+            state.ai_shield = true;
+            actualActions.push({ type: 'shield' });
+
+        } else if (action === 'heal') {
+            if (state.ai_heal_cd > 0) return [false, null];
+            const healAmount = 25;
+            state.ai_hp = Math.min(100, state.ai_hp + healAmount);
+            state.ai_heal_cd = 3;
+            actualActions.push({ type: 'heal', amount: healAmount });
+        }
+    }
+
+    return [true, [state, actualActions]];
+}
+
+function computeBestAiTurn(gameStateVal, walls) {
+    const combos = generateActionCombinations(gameStateVal.ai_heal_cd);
+
+    let bestActions = [];
+    let bestUtility = -Infinity;
+    let bestFinalState = null;
+
+    for (const combo of combos) {
+        const [valid, result] = simulateSequence(combo, gameStateVal, walls);
+        if (valid) {
+            const [simulatedState, actions] = result;
+            let score = evaluateState(
+                simulatedState.ai_hp,
+                simulatedState.ai_pos,
+                simulatedState.ai_shield,
+                simulatedState.ai_heal_cd,
+                simulatedState.player_hp,
+                simulatedState.player_pos,
+                simulatedState.player_shield,
+                walls
+            );
+
+            score += (Math.random() * 2 - 1);
+
+            if (score > bestUtility) {
+                bestUtility = score;
+                bestActions = actions;
+                bestFinalState = simulatedState;
+            }
+        }
+    }
+
+    if (bestActions.length === 0) {
+        bestActions = [{ type: 'shield' }];
+        bestFinalState = Object.assign({}, gameStateVal, { ai_shield: true });
+    }
+
+    return [bestActions, bestFinalState];
+}
