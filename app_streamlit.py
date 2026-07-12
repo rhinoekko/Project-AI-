@@ -69,9 +69,9 @@ st.markdown("""
 st.markdown("""
     <div class="streamlit-info-text">
         <span>🤖 <strong>Cyber Pathfinder & Grid Duel</strong> &mdash; Streamlit Mode</span>
-        <span>Running on <a href="http://127.0.0.1:5000" target="_blank">http://127.0.0.1:5000</a></span>
+        <span>Running on <a href="http://127.0.0.1:8501" target="_blank">http://127.0.0.1:8501</a></span>
     </div>
 """, unsafe_allow_html=True)
 
 # Embed the Flask application in an iframe
-st.iframe("http://127.0.0.1:5000", height=920)
+st.iframe("http://127.0.0.1:8501", height=920)
